@@ -39,6 +39,22 @@ const leadSchema = new mongoose.Schema(
       maxlength: [200, "Company name too long"],
       default: null,
     },
+    age: {
+      type: Number,
+      min: [1, "Age must be at least 1"],
+      default: null,
+    },
+    gender: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    occupation: {
+      type: String,
+      trim: true,
+      maxlength: [200, "Occupation name too long"],
+      default: null,
+    },
     packageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Package",
