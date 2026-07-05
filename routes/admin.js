@@ -62,6 +62,12 @@ import {
   updateTestimonial,
   deleteTestimonial,
 } from "../controllers/videoTestimonialController.js";
+import {
+  getAdminTextTestimonials,
+  createTextTestimonial,
+  updateTextTestimonial,
+  deleteTextTestimonial,
+} from "../controllers/textTestimonialController.js";
 import { getUploadSignature } from "../controllers/uploadController.js";
 import { getAdmins, createAdmin } from "../controllers/adminUserController.js";
 import {
@@ -134,6 +140,11 @@ router.get("/testimonials", getAdminTestimonials);
 router.post("/testimonials", createTestimonial);
 router.patch("/testimonials/:id", updateTestimonial);
 router.delete("/testimonials/:id", deleteTestimonial);
+
+router.get("/text-testimonials", getAdminTextTestimonials);
+router.post("/text-testimonials", createTextTestimonial);
+router.patch("/text-testimonials/:id", updateTextTestimonial);
+router.delete("/text-testimonials/:id", deleteTextTestimonial);
 
 router.post("/upload", getUploadSignature);
 
