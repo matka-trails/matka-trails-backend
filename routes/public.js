@@ -3,6 +3,7 @@ import {
   getPublicDestinations,
   getPublicDestinationBySlug,
 } from "../controllers/destinationController.js";
+import { getPublicHeroConfig } from "../controllers/heroController.js";
 import {
   getPublicPackages,
   getPublicPackageBySlug,
@@ -19,6 +20,8 @@ import { getPublicGallery } from "../controllers/galleryController.js";
 import { getPublicTestimonials } from "../controllers/videoTestimonialController.js";
 
 const router = express.Router();
+
+router.get("/hero", getPublicHeroConfig);
 
 router.get("/destinations", getPublicDestinations);
 router.get("/destinations/:slug", getPublicDestinationBySlug);

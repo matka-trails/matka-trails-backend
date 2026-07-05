@@ -14,6 +14,7 @@ export const CLOUDINARY_FOLDERS = {
   reviews: "matka-trails/reviews",
   gallery: "matka-trails/gallery",
   pdfs: "matka-trails/pdfs",
+  hero: "matka-trails/hero",
 };
 
 export function getSignedUploadParams(folderPath) {

@@ -64,6 +64,13 @@ import {
 } from "../controllers/videoTestimonialController.js";
 import { getUploadSignature } from "../controllers/uploadController.js";
 import { getAdmins, createAdmin } from "../controllers/adminUserController.js";
+import {
+  getAdminHeroConfig,
+  updateHeroConfig,
+  addHeroSlide,
+  updateHeroSlide,
+  deleteHeroSlide,
+} from "../controllers/heroController.js";
 
 const router = express.Router();
 
@@ -129,5 +136,11 @@ router.patch("/testimonials/:id", updateTestimonial);
 router.delete("/testimonials/:id", deleteTestimonial);
 
 router.post("/upload", getUploadSignature);
+
+router.get("/hero", getAdminHeroConfig);
+router.patch("/hero", updateHeroConfig);
+router.post("/hero/slides", addHeroSlide);
+router.patch("/hero/slides/:slideId", updateHeroSlide);
+router.delete("/hero/slides/:slideId", deleteHeroSlide);
 
 export default router;
