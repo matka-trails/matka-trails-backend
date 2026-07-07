@@ -40,6 +40,7 @@ import {
   deleteBlog,
 } from "../controllers/blogController.js";
 import {
+  getFaqs,
   createFaq,
   updateFaq,
   deleteFaq,
@@ -122,6 +123,7 @@ router.post("/blogs", createBlog);
 router.patch("/blogs/:id", updateBlog);
 router.delete("/blogs/:id", deleteBlog);
 
+router.get("/faqs", getFaqs);
 router.post("/faqs", createFaq);
 router.put("/faqs/bulk", bulkReplaceFaqs);
 router.put("/faqs/:id", updateFaq);

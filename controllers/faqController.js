@@ -3,15 +3,15 @@ import { successResponse, errorResponse } from "../utils/response.js";
 
 export const createFaq = async (req, res, next) => {
   try {
-    const { blogId, packageId, question, answer, sortOrder } = req.body;
+    const { blogId, packageId, destinationId, isGlobal, question, answer, sortOrder } = req.body;
 
     if (!question || !answer) {
       return errorResponse(res, "question and answer are required.", "VALIDATION_ERROR", 400);
     }
-    if (!blogId && !packageId) {
+    if (!blogId && !packageId && !destinationId && !isGlobal) {
       return errorResponse(
         res,
-        "Either blogId or packageId must be provided.",
+        "Either blogId, packageId, destinationId, or isGlobal must be provided.",
         "VALIDATION_ERROR",
         400
       );
@@ -20,6 +20,8 @@ export const createFaq = async (req, res, next) => {
     const faq = await FAQ.create({
       blogId: blogId || null,
       packageId: packageId || null,
+      destinationId: destinationId || null,
+      isGlobal: !!isGlobal,
       question: question.trim(),
       answer: answer.trim(),
       sortOrder: sortOrder !== undefined ? Number(sortOrder) : 0,
@@ -93,6 +95,38 @@ export const bulkReplaceFaqs = async (req, res, next) => {
     );
 
     return successResponse(res, newFaqs);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getFaqs = async (req, res, next) => {
+  try {
+    const { blogId, packageId, destinationId, isGlobal, page, limit } = req.query;
+    const filter = {};
+    if (blogId) filter.blogId = blogId;
+    if (packageId) filter.packageId = packageId;
+    if (destinationId) filter.destinationId = destinationId;
+    if (isGlobal !== undefined) {
+      filter.isGlobal = isGlobal === "true";
+    }
+
+    if (page && limit) {
+      const pageNum = Number(page) || 1;
+      const limitNum = Number(limit) || 10;
+      const skip = (pageNum - 1) * limitNum;
+
+      const total = await FAQ.countDocuments(filter);
+      const items = await FAQ.find(filter)
+        .sort({ sortOrder: 1 })
+        .skip(skip)
+        .limit(limitNum);
+
+      return successResponse(res, { items, total, page: pageNum, limit: limitNum });
+    }
+
+    const faqs = await FAQ.find(filter).sort({ sortOrder: 1 });
+    return successResponse(res, faqs);
   } catch (error) {
     next(error);
   }

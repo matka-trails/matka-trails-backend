@@ -5,7 +5,11 @@ import { getOptimizedVideoUrl, getOptimizedImageUrl } from "../config/cloudinary
 
 export const getPublicTestimonials = async (req, res, next) => {
   try {
-    const items = await VideoTestimonial.find().sort({ sortOrder: 1, createdAt: -1 });
+    const { destinationId } = req.query;
+    const filter = {};
+    if (destinationId) filter.destinationId = destinationId;
+
+    const items = await VideoTestimonial.find(filter).sort({ sortOrder: 1, createdAt: -1 });
 
     const optimized = items.map((item) => ({
       ...item.toObject(),
@@ -22,10 +26,13 @@ export const getPublicTestimonials = async (req, res, next) => {
 export const getAdminTestimonials = async (req, res, next) => {
   try {
     const { page, limit, skip } = parsePagination(req.query);
+    const { destinationId } = req.query;
+    const filter = {};
+    if (destinationId) filter.destinationId = destinationId;
 
     const [items, total] = await Promise.all([
-      VideoTestimonial.find().sort({ sortOrder: 1, createdAt: -1 }).skip(skip).limit(limit),
-      VideoTestimonial.countDocuments(),
+      VideoTestimonial.find(filter).sort({ sortOrder: 1, createdAt: -1 }).skip(skip).limit(limit),
+      VideoTestimonial.countDocuments(filter),
     ]);
 
     return paginatedResponse(res, items, total, page, limit);
@@ -36,7 +43,7 @@ export const getAdminTestimonials = async (req, res, next) => {
 
 export const createTestimonial = async (req, res, next) => {
   try {
-    const { videoUrl, title, thumbnail, sortOrder } = req.body;
+    const { videoUrl, title, thumbnail, sortOrder, destinationId } = req.body;
 
     if (!videoUrl || !title) {
       return errorResponse(res, "videoUrl and title are required.", "VALIDATION_ERROR", 400);
@@ -47,6 +54,7 @@ export const createTestimonial = async (req, res, next) => {
       title: title.trim(),
       thumbnail: thumbnail || null,
       sortOrder: sortOrder !== undefined ? Number(sortOrder) : 0,
+      destinationId: destinationId || null,
     });
 
     return successResponse(res, testimonial, 201);

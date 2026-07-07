@@ -9,6 +9,7 @@ cloudinary.config({
 export const CLOUDINARY_FOLDERS = {
   packages: "matka-trails/packages",
   destinations: "matka-trails/destinations",
+  "destinations-gallery": "matka-trails/destinations/gallery",
   blogs: "matka-trails/blogs",
   testimonials: "matka-trails/testimonials",
   reviews: "matka-trails/reviews",

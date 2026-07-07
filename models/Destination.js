@@ -41,6 +41,14 @@ const destinationSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    guidelines: {
+      type: [String],
+      default: [],
+    },
+    notes: {
+      type: String,
+      default: null,
+    },
     deletedAt: {
       type: Date,
       default: null,

@@ -20,6 +20,11 @@ const videoTestimonialSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    destinationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Destination",
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -29,6 +34,7 @@ const videoTestimonialSchema = new mongoose.Schema(
 );
 
 videoTestimonialSchema.index({ sortOrder: 1 });
+videoTestimonialSchema.index({ destinationId: 1, sortOrder: 1 });
 
 const VideoTestimonial = mongoose.model("VideoTestimonial", videoTestimonialSchema);
 export default VideoTestimonial;

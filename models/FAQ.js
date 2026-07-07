@@ -25,6 +25,15 @@ const faqSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isGlobal: {
+      type: Boolean,
+      default: false,
+    },
+    destinationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Destination",
+      default: null,
+    },
   },
   {
     timestamps: false,
@@ -35,6 +44,8 @@ const faqSchema = new mongoose.Schema(
 
 faqSchema.index({ blogId: 1, sortOrder: 1 });
 faqSchema.index({ packageId: 1, sortOrder: 1 });
+faqSchema.index({ isGlobal: 1, sortOrder: 1 });
+faqSchema.index({ destinationId: 1, sortOrder: 1 });
 
 const FAQ = mongoose.model("FAQ", faqSchema);
 export default FAQ;

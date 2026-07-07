@@ -1,10 +1,12 @@
 import Destination from "../models/Destination.js";
 import Package from "../models/Package.js";
 import DestinationGallery from "../models/DestinationGallery.js";
+import FAQ from "../models/FAQ.js";
+import VideoTestimonial from "../models/VideoTestimonial.js";
 import { successResponse, errorResponse, paginatedResponse } from "../utils/response.js";
 import { generateUniqueSlug } from "../utils/slugify.js";
 import { parsePagination } from "../utils/pagination.js";
-import { getOptimizedImageUrl } from "../config/cloudinary.js";
+import { getOptimizedImageUrl, getOptimizedVideoUrl } from "../config/cloudinary.js";
 
 export const getPublicDestinations = async (req, res, next) => {
   try {
@@ -46,11 +48,13 @@ export const getPublicDestinationBySlug = async (req, res, next) => {
       return errorResponse(res, "Destination not found.", "NOT_FOUND", 404);
     }
 
-    const [gallery, packages] = await Promise.all([
+    const [gallery, packages, faqs, testimonials] = await Promise.all([
       DestinationGallery.find({ destinationId: destination._id }).sort({ sortOrder: 1 }),
       Package.find({ destinationId: destination._id, status: "PUBLISHED", deletedAt: null })
         .sort({ createdAt: -1 })
         .select("title slug summary coverImage durationDays durationNights priceOriginal priceDiscounted groupType isFeatured startDate maxGroupSize currentBookings"),
+      FAQ.find({ destinationId: destination._id }).sort({ sortOrder: 1 }),
+      VideoTestimonial.find({ destinationId: destination._id }).sort({ sortOrder: 1 }),
     ]);
 
     const result = {
@@ -63,6 +67,12 @@ export const getPublicDestinationBySlug = async (req, res, next) => {
       packages: packages.map((pkg) => ({
         ...pkg.toObject(),
         coverImage: pkg.coverImage ? getOptimizedImageUrl(pkg.coverImage, 600) : null,
+      })),
+      faqs: faqs.map((f) => f.toObject()),
+      testimonials: testimonials.map((t) => ({
+        ...t.toObject(),
+        videoUrl: getOptimizedVideoUrl(t.videoUrl),
+        thumbnail: t.thumbnail ? getOptimizedImageUrl(t.thumbnail, 400) : null,
       })),
     };
 
@@ -120,7 +130,7 @@ export const getAdminDestinations = async (req, res, next) => {
 
 export const createDestination = async (req, res, next) => {
   try {
-    const { name, description, coverImage, isFeatured, metaTitle, metaDescription, sortOrder } = req.body;
+    const { name, description, coverImage, isFeatured, metaTitle, metaDescription, sortOrder, guidelines, notes } = req.body;
 
     if (!name || name.trim().length < 1) {
       return errorResponse(res, "Destination name is required.", "VALIDATION_ERROR", 400);
@@ -140,6 +150,8 @@ export const createDestination = async (req, res, next) => {
       metaTitle: metaTitle || null,
       metaDescription: metaDescription || null,
       sortOrder: sortOrder ? Number(sortOrder) : 0,
+      guidelines: Array.isArray(guidelines) ? guidelines : [],
+      notes: notes || null,
     });
 
     return successResponse(res, destination, 201);
