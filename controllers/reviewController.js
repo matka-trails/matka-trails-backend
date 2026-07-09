@@ -119,3 +119,13 @@ export const deletePackageTestimonial = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPackageTestimonials = async (req, res, next) => {
+  try {
+    const { packageId } = req.params;
+    const testimonials = await PackageVideoTestimonial.find({ packageId }).sort({ sortOrder: 1 });
+    return successResponse(res, testimonials);
+  } catch (error) {
+    next(error);
+  }
+};

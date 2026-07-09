@@ -31,6 +31,7 @@ import {
   deleteReview,
   addPackageTestimonial,
   deletePackageTestimonial,
+  getPackageTestimonials,
 } from "../controllers/reviewController.js";
 import {
   getAdminBlogs,
@@ -69,7 +70,7 @@ import {
   updateTextTestimonial,
   deleteTextTestimonial,
 } from "../controllers/textTestimonialController.js";
-import { getUploadSignature } from "../controllers/uploadController.js";
+import { getUploadSignature, uploadPdf } from "../controllers/uploadController.js";
 import { getAdmins, createAdmin } from "../controllers/adminUserController.js";
 import {
   getAdminHeroConfig,
@@ -114,6 +115,7 @@ router.post("/packages/:packageId/reviews", addReview);
 router.patch("/packages/:packageId/reviews/:reviewId", updateReview);
 router.delete("/packages/:packageId/reviews/:reviewId", deleteReview);
 
+router.get("/packages/:packageId/testimonials", getPackageTestimonials);
 router.post("/packages/:packageId/testimonials", addPackageTestimonial);
 router.delete("/packages/:packageId/testimonials/:testimonialId", deletePackageTestimonial);
 
@@ -149,6 +151,7 @@ router.patch("/text-testimonials/:id", updateTextTestimonial);
 router.delete("/text-testimonials/:id", deleteTextTestimonial);
 
 router.post("/upload", getUploadSignature);
+router.post("/upload/pdf", uploadPdf);
 
 router.get("/hero", getAdminHeroConfig);
 router.patch("/hero", updateHeroConfig);

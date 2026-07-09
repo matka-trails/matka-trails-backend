@@ -305,6 +305,7 @@ export const createPackage = async (req, res, next) => {
       maxGroupSize,
       metaTitle,
       metaDescription,
+      itinerary,
     } = req.body;
 
     if (!title) return errorResponse(res, "Package title is required.", "VALIDATION_ERROR", 400);
@@ -348,6 +349,19 @@ export const createPackage = async (req, res, next) => {
       metaDescription: metaDescription || null,
     });
 
+    if (Array.isArray(itinerary)) {
+      await ItineraryDay.insertMany(
+        itinerary.map((d, idx) => ({
+          packageId: pkg._id,
+          dayNumber: Number(d.dayNumber || idx + 1),
+          title: d.title?.trim() || `Day ${idx + 1}`,
+          description: d.description || null,
+          images: d.images || [],
+          sortOrder: d.sortOrder !== undefined ? Number(d.sortOrder) : idx,
+        }))
+      );
+    }
+
     const populated = await pkg.populate("destinationId", "id name slug");
     return successResponse(res, populated, 201);
   } catch (error) {
@@ -377,6 +391,23 @@ export const updatePackage = async (req, res, next) => {
     }
     if (updates.endDate !== undefined) {
       updates.endDate = updates.endDate ? new Date(updates.endDate) : null;
+    }
+
+    const { itinerary } = updates;
+    delete updates.itinerary;
+
+    if (Array.isArray(itinerary)) {
+      await ItineraryDay.deleteMany({ packageId: id });
+      await ItineraryDay.insertMany(
+        itinerary.map((d, idx) => ({
+          packageId: id,
+          dayNumber: Number(d.dayNumber || idx + 1),
+          title: d.title?.trim() || `Day ${idx + 1}`,
+          description: d.description || null,
+          images: d.images || [],
+          sortOrder: d.sortOrder !== undefined ? Number(d.sortOrder) : idx,
+        }))
+      );
     }
 
     Object.assign(pkg, updates);

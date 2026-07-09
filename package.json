@@ -9,7 +9,12 @@
     "start": "node server.js",
     "seed": "node seed/seed.js"
   },
-  "keywords": ["matka-trails", "express", "mongodb", "travel"],
+  "keywords": [
+    "matka-trails",
+    "express",
+    "mongodb",
+    "travel"
+  ],
   "author": "Matka Trails",
   "license": "ISC",
   "dependencies": {
@@ -22,15 +27,27 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "multer": "^2.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
   },
   "nodemonConfig": {
-    "watch": ["*.js", "config", "models", "routes", "controllers", "middleware", "utils"],
+    "watch": [
+      "*.js",
+      "config",
+      "models",
+      "routes",
+      "controllers",
+      "middleware",
+      "utils"
+    ],
     "ext": "js",
-    "ignore": ["node_modules", "seed"],
+    "ignore": [
+      "node_modules",
+      "seed"
+    ],
     "delay": "500"
   }
 }
