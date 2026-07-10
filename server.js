@@ -7,11 +7,6 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 import connectDB from "./config/db.js";
 import errorHandler from "./middleware/errorHandler.js";
@@ -48,17 +43,6 @@ app.use(
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-// Serve uploaded files (PDFs etc.) with headers that allow browser download
-app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith(".pdf")) {
-      res.set("Content-Type", "application/pdf");
-      res.set("Content-Disposition", "inline");
-      res.set("X-Content-Type-Options", "nosniff");
-    }
-  },
-}));
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));

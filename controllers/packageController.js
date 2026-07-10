@@ -7,7 +7,7 @@ import FAQ from "../models/FAQ.js";
 import { successResponse, errorResponse, paginatedResponse } from "../utils/response.js";
 import { generateUniqueSlug } from "../utils/slugify.js";
 import { parsePagination } from "../utils/pagination.js";
-import { getOptimizedImageUrl, getOptimizedVideoUrl } from "../config/cloudinary.js";
+import { getOptimizedImageUrl, getOptimizedVideoUrl, cloudinary } from "../config/cloudinary.js";
 
 export const getPublicPackages = async (req, res, next) => {
   try {
@@ -437,3 +437,45 @@ export const deletePackage = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * GET /api/public/packages/:id/download-pdf
+ * Generates a Cloudinary private_download_url routed through api.cloudinary.com
+ * (NOT res.cloudinary.com CDN) — bypasses the "untrusted customer" delivery restriction.
+ * The pdfUrl field stores the Cloudinary public_id of the uploaded PDF.
+ */
+export const downloadPackagePdf = async (req, res, next) => {
+  try {
+    // Re-configure to ensure env vars are read at request time (ESM hoisting issue)
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    const pkg = await Package.findById(req.params.id).select("pdfUrl title slug");
+
+    if (!pkg) return errorResponse(res, "Package not found.", "NOT_FOUND", 404);
+    if (!pkg.pdfUrl) return errorResponse(res, "No PDF itinerary available for this package.", "NOT_FOUND", 404);
+
+    // pdfUrl stores the Cloudinary public_id (e.g. "matka-trails/pdfs/1783601877930-filename")
+    // private_download_url generates: https://api.cloudinary.com/v1_1/.../raw/download?...
+    // This goes through the API endpoint, NOT the CDN → bypasses untrusted restriction
+    const downloadUrl = cloudinary.utils.private_download_url(
+      pkg.pdfUrl,
+      null, // format (null = use as-is for raw files)
+      {
+        resource_type: "raw",
+        type: "upload",
+        expires_at: Math.floor(Date.now() / 1000) + 3600, // 1-hour expiry
+        attachment: true,
+      }
+    );
+
+    // Redirect the user directly to the Cloudinary API download URL
+    return res.redirect(downloadUrl);
+  } catch (error) {
+    next(error);
+  }
+};
+
