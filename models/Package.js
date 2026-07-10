@@ -52,6 +52,14 @@ const packageSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    pdfFileId: {
+      type: String,  // GridFS ObjectId stored as string
+      default: null,
+    },
+    pdfOriginalName: {
+      type: String,
+      default: null,
+    },
     coverImage: {
       type: String,
       default: null,

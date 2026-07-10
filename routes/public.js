@@ -8,6 +8,7 @@ import {
   getPublicPackages,
   getPublicPackageBySlug,
   downloadPackagePdf,
+  streamFileFromGridFS,
 } from "../controllers/packageController.js";
 import {
   getPublicBlogs,
@@ -31,6 +32,7 @@ router.get("/destinations/:slug", getPublicDestinationBySlug);
 
 router.get("/packages", getPublicPackages);
 router.get("/packages/:id/download-pdf", downloadPackagePdf);
+router.get("/packages/files/:fileId", streamFileFromGridFS);
 router.get("/packages/:slug", getPublicPackageBySlug);
 
 router.get("/blogs", getPublicBlogs);

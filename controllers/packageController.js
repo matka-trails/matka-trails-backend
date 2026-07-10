@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Package from "../models/Package.js";
 import Destination from "../models/Destination.js";
 import ItineraryDay from "../models/ItineraryDay.js";
@@ -437,45 +438,106 @@ export const deletePackage = async (req, res, next) => {
     next(error);
   }
 };
-
 /**
  * GET /api/public/packages/:id/download-pdf
- * Generates a Cloudinary private_download_url routed through api.cloudinary.com
- * (NOT res.cloudinary.com CDN) — bypasses the "untrusted customer" delivery restriction.
- * The pdfUrl field stores the Cloudinary public_id of the uploaded PDF.
+ * Streams PDF file directly from MongoDB GridFS if it's stored as an ObjectId,
+ * or falls back to generating a Cloudinary private download URL.
  */
 export const downloadPackagePdf = async (req, res, next) => {
   try {
-    // Re-configure to ensure env vars are read at request time (ESM hoisting issue)
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-
     const pkg = await Package.findById(req.params.id).select("pdfUrl title slug");
 
     if (!pkg) return errorResponse(res, "Package not found.", "NOT_FOUND", 404);
     if (!pkg.pdfUrl) return errorResponse(res, "No PDF itinerary available for this package.", "NOT_FOUND", 404);
 
-    // pdfUrl stores the Cloudinary public_id (e.g. "matka-trails/pdfs/1783601877930-filename")
-    // private_download_url generates: https://api.cloudinary.com/v1_1/.../raw/download?...
-    // This goes through the API endpoint, NOT the CDN → bypasses untrusted restriction
-    const downloadUrl = cloudinary.utils.private_download_url(
-      pkg.pdfUrl,
-      null, // format (null = use as-is for raw files)
-      {
-        resource_type: "raw",
-        type: "upload",
-        expires_at: Math.floor(Date.now() / 1000) + 3600, // 1-hour expiry
-        attachment: true,
-      }
-    );
+    // Check if pdfUrl is a 24-character hexadecimal string (MongoDB ObjectId)
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(pkg.pdfUrl);
 
-    // Redirect the user directly to the Cloudinary API download URL
-    return res.redirect(downloadUrl);
+    if (isObjectId) {
+      const db = mongoose.connection.db;
+      const bucket = new mongoose.mongo.GridFSBucket(db, {
+        bucketName: "itineraries",
+      });
+
+      const fileId = new mongoose.Types.ObjectId(pkg.pdfUrl);
+      
+      const files = await bucket.find({ _id: fileId }).toArray();
+      if (files.length === 0) {
+        return errorResponse(res, "PDF file not found in database.", "NOT_FOUND", 404);
+      }
+
+      const file = files[0];
+      res.set({
+        "Content-Type": file.contentType || "application/pdf",
+        "Content-Disposition": `attachment; filename="${file.filename}"`,
+        "Content-Length": file.length,
+      });
+
+      const downloadStream = bucket.openDownloadStream(fileId);
+      downloadStream.pipe(res);
+    } else {
+      // Re-configure to ensure env vars are read at request time (ESM hoisting issue)
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      });
+
+      const downloadUrl = cloudinary.utils.private_download_url(
+        pkg.pdfUrl,
+        null, // format (null = use as-is for raw files)
+        {
+          resource_type: "raw",
+          type: "upload",
+          expires_at: Math.floor(Date.now() / 1000) + 3600, // 1-hour expiry
+          attachment: true,
+        }
+      );
+
+      // Redirect the user directly to the Cloudinary API download URL
+      return res.redirect(downloadUrl);
+    }
   } catch (error) {
     next(error);
   }
 };
 
+/**
+ * GET /api/public/packages/files/:fileId
+ * Streams a PDF file directly from MongoDB GridFS by its fileId.
+ * Used for previews and downloads during creation or editing in the admin panel.
+ */
+export const streamFileFromGridFS = async (req, res, next) => {
+  try {
+    const { fileId } = req.params;
+
+    // Validate ObjectId format
+    if (!/^[0-9a-fA-F]{24}$/.test(fileId)) {
+      return errorResponse(res, "Invalid file ID format.", "BAD_REQUEST", 400);
+    }
+
+    const db = mongoose.connection.db;
+    const bucket = new mongoose.mongo.GridFSBucket(db, {
+      bucketName: "itineraries",
+    });
+
+    const oid = new mongoose.Types.ObjectId(fileId);
+    
+    const files = await bucket.find({ _id: oid }).toArray();
+    if (files.length === 0) {
+      return errorResponse(res, "File not found.", "NOT_FOUND", 404);
+    }
+
+    const file = files[0];
+    res.set({
+      "Content-Type": file.contentType || "application/pdf",
+      "Content-Disposition": `inline; filename="${file.filename}"`,
+      "Content-Length": file.length,
+    });
+
+    const downloadStream = bucket.openDownloadStream(oid);
+    downloadStream.pipe(res);
+  } catch (error) {
+    next(error);
+  }
+};
